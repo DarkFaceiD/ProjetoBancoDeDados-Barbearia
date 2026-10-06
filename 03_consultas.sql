@@ -4,9 +4,18 @@
 --
 -- São as perguntas que o dono hoje não consegue responder com o
 -- caderno. Cada uma vira uma consulta.
+--
+-- COMO RODAR
+--   psql:     psql -d barbearia -f 03_consultas.sql   (mostra tudo)
+--   Supabase: o SQL Editor exibe apenas o resultado do ÚLTIMO comando.
+--             Selecione UMA consulta com o mouse e clique em Run —
+--             ele executa só o trecho selecionado.
 -- =====================================================================
 
-\echo '=== 1. Agenda do dia (substitui a folha do caderno) ==='
+
+-- =====================================================================
+-- 1. Agenda do dia (substitui a folha do caderno)
+-- =====================================================================
 SELECT a.data_hora_inicio::time AS hora,
        b.nome                   AS barbeiro,
        c.nome                   AS cliente,
@@ -21,8 +30,10 @@ SELECT a.data_hora_inicio::time AS hora,
  GROUP BY a.id_agendamento, a.data_hora_inicio, b.nome, c.nome, a.status
  ORDER BY a.data_hora_inicio;
 
-\echo ''
-\echo '=== 2. Faturamento por barbeiro ==='
+
+-- =====================================================================
+-- 2. Faturamento por barbeiro
+-- =====================================================================
 SELECT b.nome                        AS barbeiro,
        COUNT(v.id_venda)             AS vendas,
        SUM(v.valor_total)            AS faturamento,
@@ -32,28 +43,34 @@ SELECT b.nome                        AS barbeiro,
  GROUP BY b.nome
  ORDER BY faturamento DESC;
 
-\echo ''
-\echo '=== 3. Serviços mais vendidos ==='
-SELECT s.nome                       AS servico,
-       COUNT(*)                     AS vezes,
-       SUM(asv.preco_cobrado)       AS receita
+
+-- =====================================================================
+-- 3. Serviços mais vendidos
+-- =====================================================================
+SELECT s.nome                 AS servico,
+       COUNT(*)               AS vezes,
+       SUM(asv.preco_cobrado) AS receita
   FROM agendamento_servico asv
   JOIN servico s ON s.id_servico = asv.id_servico
  GROUP BY s.nome
  ORDER BY vezes DESC, receita DESC;
 
-\echo ''
-\echo '=== 4. Produtos mais vendidos ==='
-SELECT p.nome                                   AS produto,
-       SUM(iv.quantidade)                       AS unidades,
-       SUM(iv.quantidade * iv.preco_unitario)   AS receita
+
+-- =====================================================================
+-- 4. Produtos mais vendidos
+-- =====================================================================
+SELECT p.nome                                 AS produto,
+       SUM(iv.quantidade)                     AS unidades,
+       SUM(iv.quantidade * iv.preco_unitario) AS receita
   FROM item_venda iv
   JOIN produto p ON p.id_produto = iv.id_produto
  GROUP BY p.nome
  ORDER BY unidades DESC;
 
-\echo ''
-\echo '=== 5. Clientes que mais faltam ==='
+
+-- =====================================================================
+-- 5. Clientes que mais faltam
+-- =====================================================================
 SELECT c.nome,
        COUNT(*) FILTER (WHERE a.status = 'faltou')    AS faltas,
        COUNT(*)                                       AS agendamentos,
@@ -65,17 +82,22 @@ SELECT c.nome,
 HAVING COUNT(*) FILTER (WHERE a.status = 'faltou') > 0
  ORDER BY faltas DESC;
 
-\echo ''
-\echo '=== 6. Produtos com estoque baixo (menos de 20 unidades) ==='
+
+-- =====================================================================
+-- 6. Produtos com estoque baixo (menos de 20 unidades)
+-- =====================================================================
 SELECT nome, categoria, qtd_estoque
   FROM produto
  WHERE qtd_estoque < 20
  ORDER BY qtd_estoque;
 
-\echo ''
-\echo '=== 7. Conferência de caixa: vendas cujo total nao bate ==='
+
+-- =====================================================================
+-- 7. Conferência de caixa: vendas cujo total não bate
+-- =====================================================================
 -- Enquanto o valor_total for digitado por quem fecha a conta, esta
 -- consulta é a rede de segurança. Em produção, viraria uma trigger.
+-- Resultado vazio = todas as vendas conferem.
 SELECT v.id_venda, v.valor_total AS registrado,
        COALESCE(s.servicos,0) + COALESCE(p.produtos,0) AS calculado
   FROM venda v
@@ -87,12 +109,14 @@ SELECT v.id_venda, v.valor_total AS registrado,
          ON p.id_venda = v.id_venda
  WHERE v.valor_total <> COALESCE(s.servicos,0) + COALESCE(p.produtos,0);
 
-\echo ''
-\echo '=== 8. Horarios livres de um barbeiro em um dia ==='
--- Mostra as janelas ocupadas; o que sobra entre elas está livre.
-SELECT b.nome AS barbeiro,
-       a.data_hora_inicio::time AS ocupado_de,
-       a.data_hora_fim::time    AS ate
+
+-- =====================================================================
+-- 8. Horários ocupados de um barbeiro num dia
+-- =====================================================================
+-- O que sobra entre as janelas está livre para encaixe.
+SELECT b.nome                    AS barbeiro,
+       a.data_hora_inicio::time  AS ocupado_de,
+       a.data_hora_fim::time     AS ate
   FROM agendamento a
   JOIN barbeiro b ON b.id_barbeiro = a.id_barbeiro
  WHERE b.id_barbeiro = 1
@@ -100,11 +124,15 @@ SELECT b.nome AS barbeiro,
    AND a.status <> 'cancelado'
  ORDER BY a.data_hora_inicio;
 
-\echo ''
-\echo '=== CRUD: INSERT, UPDATE, DELETE ==='
 
--- INSERT: novo agendamento. O banco recusa se o barbeiro já estiver
--- ocupado em qualquer parte desse intervalo.
+-- =====================================================================
+-- CRUD — as quatro operações básicas
+-- =====================================================================
+-- ATENÇÃO: os comandos abaixo ALTERAM os dados. Rode depois das
+-- consultas acima, ou recarregue o 02_seed.sql para voltar ao início.
+
+-- INSERT: novo agendamento.
+-- O banco recusa se o barbeiro já estiver ocupado nesse intervalo.
 INSERT INTO agendamento (id_cliente, id_barbeiro, data_hora_inicio, data_hora_fim)
 VALUES (2, 1, '2026-10-20 09:00', '2026-10-20 09:40');
 
@@ -113,8 +141,7 @@ UPDATE agendamento
    SET status = 'faltou'
  WHERE id_agendamento = 5;
 
--- DELETE: item lançado por engano na comanda.
--- (devolvendo a unidade ao estoque, na mesma transação)
+-- DELETE: item lançado por engano na comanda, devolvendo ao estoque.
 BEGIN;
   INSERT INTO item_venda (id_venda, id_produto, quantidade, preco_unitario)
   VALUES (1, 4, 1, 44.90);
@@ -124,9 +151,7 @@ BEGIN;
   UPDATE produto SET qtd_estoque = qtd_estoque + 1 WHERE id_produto = 4;
 COMMIT;
 
-\echo 'CRUD executado.'
-\echo ''
-\echo '=== Faltas depois do UPDATE acima ==='
+-- Confere o efeito do UPDATE acima: agora há uma falta registrada.
 SELECT c.nome, COUNT(*) FILTER (WHERE a.status = 'faltou') AS faltas
   FROM agendamento a
   JOIN cliente c ON c.id_cliente = a.id_cliente

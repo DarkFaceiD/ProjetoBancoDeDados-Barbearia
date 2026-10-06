@@ -71,6 +71,8 @@ psql -h localhost -U postgres -d barbearia -f 04_testes.sql
 
 Abra o **SQL Editor** do projeto e cole o conteúdo dos arquivos, na ordem numerada. O `CREATE EXTENSION btree_gist` já está no começo do `01_schema.sql` e funciona no plano gratuito.
 
+Dois detalhes do SQL Editor: ele mostra apenas o resultado do **último** comando, então no `03_consultas.sql` convém selecionar uma consulta de cada vez com o mouse e clicar em Run — ele executa só o trecho selecionado. O `04_testes.sql` já devolve tudo numa tabela só, então basta colar e rodar inteiro.
+
 ## Os arquivos
 
 | Arquivo | O que faz |
@@ -82,24 +84,20 @@ Abra o **SQL Editor** do projeto e cole o conteúdo dos arquivos, na ordem numer
 
 ## Os testes
 
-`04_testes.sql` é a prova de que o modelo se sustenta. Ele tenta 15 operações inválidas e espera que todas sejam recusadas:
+`04_testes.sql` é a prova de que o modelo se sustenta. Ele roda 20 verificações e devolve **uma única tabela** com o resultado de cada uma:
 
-```
-PASSOU -> Horario sobreposto no mesmo barbeiro
-PASSOU -> Sobreposicao parcial (14:30-15:10 invade 14:00-14:40)
-PASSOU -> Agendamento terminando antes de comecar
-PASSOU -> Status fora da lista permitida
-PASSOU -> Telefone de cliente repetido
-PASSOU -> Duas vendas para o mesmo agendamento
-PASSOU -> Mesmo produto duas vezes na mesma venda
-PASSOU -> Estoque ficando negativo
-PASSOU -> Apagar um cliente que tem historico
-...
-```
+| # | Resultado | Grupo | O que foi testado | Resposta do banco |
+|---|---|---|---|---|
+| 1 | PASSOU | Agenda | Horario sobreposto no mesmo barbeiro | conflicting key value violates exclusion constraint "agendamento_sem_sobreposicao" |
+| 6 | PASSOU | Cadastros | Telefone de cliente repetido | duplicate key value violates unique constraint "cliente_telefone_key" |
+| 13 | PASSOU | Vendas | Estoque ficando negativo | new row for relation "produto" violates check constraint "produto_qtd_estoque_check" |
+| 16 | PASSOU | Deve aceitar | Venda de balcao, sem cliente e sem agendamento | aceito, como esperado |
 
-E confere cinco casos que **devem** ser aceitos: venda de balcão sem cliente, duas vendas de balcão ao mesmo tempo, agendamento encostado no anterior sem sobrepor, mesmo horário em outro barbeiro, e horário liberado depois de um cancelamento.
+São **15 tentativas de gravar dados inválidos**, que o banco precisa recusar — horário sobreposto, preço negativo, telefone repetido, estoque negativo, apagar cliente com histórico — e **5 operações válidas**, que ele precisa aceitar: venda de balcão sem cliente, duas vendas de balcão ao mesmo tempo, agendamento encostado no anterior sem sobrepor, mesmo horário em outro barbeiro, e horário liberado depois de um cancelamento.
 
-Testado no PostgreSQL 16.15. Os 15 testes de violação e os 5 casos válidos passam.
+O script se limpa no fim, então pode ser executado várias vezes seguidas sempre com o mesmo resultado — o que importa numa demonstração ao vivo.
+
+Testado no PostgreSQL 16.15: 20 de 20 passam.
 
 ## Consultas que o banco responde
 
