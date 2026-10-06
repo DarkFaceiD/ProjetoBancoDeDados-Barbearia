@@ -113,8 +113,7 @@ Os dados de `02_seed.sql` são fictícios. Nomes, telefones e e-mails foram inve
 
 A documentação do projeto — introdução, objetivos, justificativa, metodologia, análise do local, cronograma e referências — está publicada no Medium:
 
-<!-- Cole aqui o link do artigo depois de publicar -->
-`[link do artigo no Medium]`
+**[Banco de dados em PostgreSQL para uma barbearia: agenda sem conflito e vendas integradas](https://medium.com/@edu2015pitaluga2011/banco-de-dados-em-postgresql-para-uma-barbearia-agenda-sem-conflito-e-vendas-integradas-37f59e4d7ccd)**
 
 ## Equipe
 
