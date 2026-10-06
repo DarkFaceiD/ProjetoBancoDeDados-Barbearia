@@ -61,10 +61,10 @@ Agendamentos cancelados ficam de fora da regra, então o horário volta a ficar 
 docker run --name barbearia -e POSTGRES_PASSWORD=postgres -p 5432:5432 -d postgres:16
 
 psql -h localhost -U postgres -c "CREATE DATABASE barbearia;"
-psql -h localhost -U postgres -d barbearia -f sql/01_schema.sql
-psql -h localhost -U postgres -d barbearia -f sql/02_seed.sql
-psql -h localhost -U postgres -d barbearia -f sql/03_consultas.sql
-psql -h localhost -U postgres -d barbearia -f sql/04_testes.sql
+psql -h localhost -U postgres -d barbearia -f 01_schema.sql
+psql -h localhost -U postgres -d barbearia -f 02_seed.sql
+psql -h localhost -U postgres -d barbearia -f 03_consultas.sql
+psql -h localhost -U postgres -d barbearia -f 04_testes.sql
 ```
 
 ### Em nuvem, no Supabase
@@ -75,10 +75,10 @@ Abra o **SQL Editor** do projeto e cole o conteúdo dos arquivos, na ordem numer
 
 | Arquivo | O que faz |
 |---|---|
-| `sql/01_schema.sql` | Cria as 8 tabelas, as chaves, os `CHECK`, os `UNIQUE`, a restrição `EXCLUDE` e os índices |
-| `sql/02_seed.sql` | Carga de teste e uma consulta que confere se cada venda fecha |
-| `sql/03_consultas.sql` | Consultas gerenciais e exemplos de `INSERT`, `UPDATE` e `DELETE` |
-| `sql/04_testes.sql` | Tenta gravar dados inválidos e verifica que o banco recusa |
+| `01_schema.sql` | Cria as 8 tabelas, as chaves, os `CHECK`, os `UNIQUE`, a restrição `EXCLUDE` e os índices |
+| `02_seed.sql` | Carga de teste e uma consulta que confere se cada venda fecha |
+| `03_consultas.sql` | Consultas gerenciais e exemplos de `INSERT`, `UPDATE` e `DELETE` |
+| `04_testes.sql` | Tenta gravar dados inválidos e verifica que o banco recusa |
 
 ## Os testes
 
